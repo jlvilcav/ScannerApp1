@@ -22,9 +22,33 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    //private void TreeView_Loaded(object sender, RoutedEventArgs e)
+    //{
+    //    string path = @"E:\Mi_scanner";
+    //    if (!Directory.Exists(path))
+    //    {
+    //        Directory.CreateDirectory(path);
+    //    }
+
+    //    TreeView? treeView = sender as TreeView;
+    //    if (treeView != null)
+    //    {
+    //        TreeViewItem rootItem = new TreeViewItem { Header = "DIRECTORIO PRINCIPAL" };
+    //        foreach (var directory in Directory.GetDirectories(path))
+    //        {
+    //            TreeViewItem item = new TreeViewItem { Header = System.IO.Path.GetFileName(directory), ContextMenu = (ContextMenu)FindResource("DirectoryContextMenu") };
+    //            // Cargar las subcarpetas dentro del directorio raíz
+
+    //            rootItem.Items.Add(item);
+    //        }
+
+    //        treeView.Items.Add(rootItem);
+    //    }
+    //}
+
     private void TreeView_Loaded(object sender, RoutedEventArgs e)
     {
-        string path = @"E:\Mi_scanner";
+        string path = @"E:\Mi_scanner\DIRECTORIO PRINCIPAL";
         if (!Directory.Exists(path))
         {
             Directory.CreateDirectory(path);
@@ -33,13 +57,40 @@ public partial class MainWindow : Window
         TreeView? treeView = sender as TreeView;
         if (treeView != null)
         {
-            TreeViewItem rootItem = new TreeViewItem { Header = "DIRECTORIO PRINCIPAL" };
-            foreach (var directory in Directory.GetDirectories(path))
-            {
-                TreeViewItem item = new TreeViewItem { Header = System.IO.Path.GetFileName(directory) };
-                rootItem.Items.Add(item);
-            }
+            // Crear el nodo raíz
+            TreeViewItem rootItem = new TreeViewItem { Header = "DIRECTORIO PRINCIPAL", ContextMenu = (ContextMenu)FindResource("DirectoryContextMenu") };
+
+            // Cargar las subcarpetas dentro del directorio raíz
+            CargarSubCarpetas(path, rootItem);
+
+            // Agregar la raíz al TreeView
+            treeView.Items.Clear();
             treeView.Items.Add(rootItem);
+        }
+    }
+
+    // Método recursivo para cargar subcarpetas
+    private void CargarSubCarpetas(string ruta, TreeViewItem parentItem)
+    {
+        try
+        {
+            foreach (var directory in Directory.GetDirectories(ruta))
+            {
+                TreeViewItem newItem = new TreeViewItem
+                {
+                    Header = System.IO.Path.GetFileName(directory),
+                    ContextMenu = (ContextMenu)FindResource("DirectoryContextMenu")
+                };
+
+                // Llamada recursiva para agregar subcarpetas
+                CargarSubCarpetas(directory, newItem);
+
+                parentItem.Items.Add(newItem);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al cargar subcarpetas: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -58,8 +109,10 @@ public partial class MainWindow : Window
 
     private void AgregarNuevoDirectorio_Click(object sender, RoutedEventArgs e)
     {
-        if (treeView.SelectedItem is TreeViewItem selectedItem && selectedItem.Header.ToString() == "DIRECTORIO PRINCIPAL")
+        if (treeView.SelectedItem is TreeViewItem selectedItem)
         {
+            string parentPath = GetFullPath(selectedItem);
+
             // Solicitar nombre al usuario
             string nombreDirectorio = Microsoft.VisualBasic.Interaction.InputBox("Ingrese el nombre del nuevo directorio:", "Nuevo Directorio", "NombreDirectorio");
 
@@ -70,8 +123,9 @@ public partial class MainWindow : Window
                 return;
             }
 
-            string path = @"E:\Mi_scanner";
-            string fullPath = System.IO.Path.Combine(path, nombreDirectorio);
+            //string path = @"E:\Mi_scanner";
+            //string fullPath = System.IO.Path.Combine(path, nombreDirectorio);
+            string fullPath = System.IO.Path.Combine(parentPath, nombreDirectorio);
 
             if (Directory.Exists(fullPath))
             {
@@ -80,15 +134,33 @@ public partial class MainWindow : Window
             }
 
             // Crear el nuevo directorio
-                Directory.CreateDirectory(fullPath);
-            }
+            Directory.CreateDirectory(fullPath);
 
             // Agregar el nuevo directorio al TreeView
-            TreeViewItem nuevoItem = new TreeViewItem { Header = nombreDirectorio };
+            TreeViewItem nuevoItem = new TreeViewItem { Header = nombreDirectorio, ContextMenu = (ContextMenu)FindResource("DirectoryContextMenu") };
             selectedItem.Items.Add(nuevoItem);
             selectedItem.IsExpanded = true;
         }
+
+
     }
 
+    // Método para obtener la ruta completa de un TreeViewItem
+    private string GetFullPath(TreeViewItem item)
+    {
+        string basePath = @"E:\Mi_scanner";
+        Stack<string> pathStack = new Stack<string>();
+
+        while (item != null)
+        {
+            if (item.Header != null)
+            {
+                pathStack.Push(item.Header.ToString());
+            }
+            item = item.Parent as TreeViewItem;
+        }
+
+        return System.IO.Path.Combine(basePath, System.IO.Path.Combine(pathStack.ToArray()));
+    }
 
 }
