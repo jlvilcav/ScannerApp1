@@ -55,6 +55,7 @@ public partial class MainWindow : Window
             }
         }
     }
+
     private void AgregarNuevoDirectorio_Click(object sender, RoutedEventArgs e)
     {
         if (treeView.SelectedItem is TreeViewItem selectedItem && selectedItem.Header.ToString() == "DIRECTORIO PRINCIPAL")
@@ -79,7 +80,8 @@ public partial class MainWindow : Window
             }
 
             // Crear el nuevo directorio
-            Directory.CreateDirectory(fullPath);
+                Directory.CreateDirectory(fullPath);
+            }
 
             // Agregar el nuevo directorio al TreeView
             TreeViewItem nuevoItem = new TreeViewItem { Header = nombreDirectorio };
